@@ -1,0 +1,9 @@
+
+> shudha_studio_codex@0.1.0 typecheck
+> tsc --noEmit
+
+src/components/language-provider.tsx(28,67): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'SetStateAction<SupportedLanguage>'.
+  Type 'null' is not assignable to type 'SetStateAction<SupportedLanguage>'.
+src/lib/i18n/translations.ts(105,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/i18n/translations.ts(266,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/i18n/translations.ts(343,5): error TS2322: Type 'string' is not assignable to type '"Skip to content" | "Primary navigation" | "Mobile navigation" | "Products" | "Contact" | "Browse" | "Call us" | "Open navigation menu" | "Close navigation menu" | "Language" | ... 299 more ... | "আপনার অ্যাক্সেস যাচাই হচ্ছে…"'.

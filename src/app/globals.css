@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+}
+
+.public-theme {
+  --theme-background: #ffffff;
+  --theme-surface: #ffffff;
+  --theme-muted-surface: #f8fafc;
+  --theme-foreground: #0f172a;
+  --theme-muted-foreground: #475569;
+  --theme-border: #e2e8f0;
+  --theme-primary: #be123c;
+  --theme-primary-hover: #9f1239;
+  --theme-primary-soft: #fecdd3;
+  --theme-hero: #020617;
+  --theme-hero-accent: #f43f5e;
+  --theme-hero-highlight: #fbbf24;
+  --theme-background-image: none;
+  background: var(--theme-background);
+  background-image: var(--theme-background-image);
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--theme-foreground);
+}
+
+.public-theme[data-theme="wedding"] {
+  --theme-background: #fffaf5;
+  --theme-surface: #fffdfb;
+  --theme-muted-surface: #fff1f2;
+  --theme-foreground: #3f1d2e;
+  --theme-muted-foreground: #79505f;
+  --theme-border: #f3d5dc;
+  --theme-primary: #9f1239;
+  --theme-primary-hover: #881337;
+  --theme-primary-soft: #fbcfe8;
+  --theme-hero: #3f172e;
+  --theme-hero-accent: #fb7185;
+  --theme-hero-highlight: #f9a8d4;
+}
+
+.public-theme[data-theme="festival"] {
+  --theme-background: #fffaf0;
+  --theme-surface: #fffdf7;
+  --theme-muted-surface: #fff7ed;
+  --theme-foreground: #351a46;
+  --theme-muted-foreground: #76546b;
+  --theme-border: #fed7aa;
+  --theme-primary: #c2410c;
+  --theme-primary-hover: #9a3412;
+  --theme-primary-soft: #fed7aa;
+  --theme-hero: #32104f;
+  --theme-hero-accent: #f97316;
+  --theme-hero-highlight: #facc15;
+}
+
+/* Existing public utility classes use these semantic theme tokens. */
+.public-theme .bg-white {
+  background-color: var(--theme-surface) !important;
+}
+.public-theme .bg-slate-50 {
+  background-color: var(--theme-muted-surface) !important;
+}
+.public-theme .bg-slate-950 {
+  background-color: var(--theme-hero) !important;
+}
+.public-theme .text-slate-950 {
+  color: var(--theme-foreground) !important;
+}
+.public-theme .text-slate-800,
+.public-theme .text-slate-700,
+.public-theme .text-slate-600 {
+  color: var(--theme-muted-foreground) !important;
+}
+.public-theme .border-slate-200,
+.public-theme .border-slate-300 {
+  border-color: var(--theme-border) !important;
+}
+.public-theme .text-rose-300 {
+  color: var(--theme-hero-accent) !important;
+}
+.public-theme .text-rose-700 {
+  color: var(--theme-primary) !important;
+}
+.public-theme .bg-rose-600,
+.public-theme .bg-rose-700 {
+  background-color: var(--theme-primary) !important;
+}
+.public-theme .hover\:bg-rose-500:hover,
+.public-theme .hover\:bg-rose-800:hover {
+  background-color: var(--theme-primary-hover) !important;
+}
+.public-theme .border-rose-300,
+.public-theme .focus\:ring-rose-300:focus,
+.public-theme .focus\:ring-rose-200:focus {
+  --tw-ring-color: var(--theme-primary-soft) !important;
+  border-color: var(--theme-primary) !important;
+}
+.public-theme .form-input:focus {
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary-soft) 60%, transparent);
+}
+
+.public-theme [class*="bg-[radial-gradient"] {
+  background-image:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--theme-hero-accent) 35%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      color-mix(in srgb, var(--theme-hero-highlight) 18%, transparent),
+      transparent 35%
+    ) !important;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.form-input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.75rem 0.875rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #be123c;
+  box-shadow: 0 0 0 3px rgb(253 164 175 / 40%);
+}

@@ -1,0 +1,13 @@
+
+> shudha_studio_codex@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 49ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1837ms
+  Running TypeScript ...
+src/components/language-provider.tsx(44,48): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<SupportedLanguage>'.
+Failed to type check.
+

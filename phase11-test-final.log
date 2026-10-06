@@ -1,0 +1,16 @@
+
+> shudha_studio_codex@0.1.0 test
+> node --test tests/*.test.mjs
+
+✔ theme settings are restricted, persisted, and rendered globally (7.0785ms)
+✔ admin mutations require authorization and database policies protect data (6.1756ms)
+✔ public workflows include validation, loading/error boundaries, and accessible navigation (2.5961ms)
+✔ privileged Supabase credentials are kept out of public client utilities (2.8183ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 135.1921

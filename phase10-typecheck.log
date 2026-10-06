@@ -1,0 +1,5 @@
+
+> shudha_studio_codex@0.1.0 typecheck
+> tsc --noEmit
+
+^C

@@ -1,0 +1,33 @@
+
+> shudha_studio_codex@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 40ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.1s
+  Running TypeScript ...
+  Finished TypeScript in 2.8s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/10) ...
+  Generating static pages using 3 workers (2/10) 
+  Generating static pages using 3 workers (4/10) 
+Error occurred prerendering page "/admin/categories/new". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: Invalid environment configuration: NEXT_PUBLIC_SUPABASE_URL: Invalid input: expected string, received undefined; NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: Invalid input: expected string, received undefined; NEXT_PUBLIC_SITE_URL: Invalid input: expected string, received undefined
+    at <unknown> (src\lib\env.ts:22:11)
+    at f (src\lib\supabase\server.ts:8:15)
+    at d (src\lib\auth\server.ts:12:26)
+    at e (src\lib\auth\server.ts:40:23)
+    at h (src\app\admin\categories\new\page.tsx:12:9)
+  20 |       .join("; ");
+  21 |
+> 22 |     throw new Error(`Invalid environment configuration: ${details}`);
+     |           ^
+  23 |   }
+  24 |
+  25 |   return result.data; {
+  digest: '1314326155'
+}
+Export encountered an error on /admin/categories/new/page: /admin/categories/new, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null
