@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/server";
@@ -48,41 +49,56 @@ export async function PATCH(request: Request, context: Context) {
     kind === "category" &&
     (body.image_path === null || isSafePath(body.image_path))
   ) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("categories")
       .update({ image_path: body.image_path })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error)
       return NextResponse.json(
         { error: "Unable to save the category image." },
         { status: 400 },
       );
+    if (!data)
+      return NextResponse.json({ error: "Category not found." }, { status: 404 });
+    revalidatePath("/", "layout");
     return NextResponse.json({ saved: true });
   }
 
   if (kind === "product" && (body.image_path === null || isSafePath(body.image_path))) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .update({ main_image_path: body.image_path })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error)
       return NextResponse.json(
         { error: "Unable to save the product image." },
         { status: 400 },
       );
+    if (!data)
+      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    revalidatePath("/", "layout");
     return NextResponse.json({ saved: true });
   }
 
   if (kind === "product" && isGallery(body.gallery_images)) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .update({ gallery_images: body.gallery_images })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error)
       return NextResponse.json(
         { error: "Unable to save the product gallery." },
         { status: 400 },
       );
+    if (!data)
+      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    revalidatePath("/", "layout");
     return NextResponse.json({ saved: true });
   }
 

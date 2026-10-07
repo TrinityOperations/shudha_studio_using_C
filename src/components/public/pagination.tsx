@@ -8,20 +8,29 @@ export function Pagination({
   totalPages,
   query,
   category,
+  sort,
+  params: extraParams = {},
+  basePath = "/shop",
 }: {
   page: number;
   totalPages: number;
   query?: string;
   category?: string;
+  sort?: string;
+  params?: Record<string, string | undefined>;
+  basePath?: string;
 }) {
   const { t } = useLanguage();
   if (totalPages <= 1) return null;
   const href = (nextPage: number) => {
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (category) params.set("category", category);
-    params.set("page", String(nextPage));
-    return `/products?${params.toString()}`;
+    const queryParams = new URLSearchParams();
+    if (query) queryParams.set("q", query);
+    if (category) queryParams.set("category", category);
+    if (sort) queryParams.set("sort", sort);
+    for (const [key, value] of Object.entries(extraParams))
+      if (value) queryParams.set(key, value);
+    queryParams.set("page", String(nextPage));
+    return `${basePath}${queryParams.size ? `?${queryParams.toString()}` : ""}`;
   };
 
   return (

@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -43,6 +43,9 @@ test("admin mutations require authorization and database policies protect data",
   const customThemes = await source(
     "supabase/migrations/20261006000500_custom_themes.sql",
   );
+  const themeImageRestorePolicy = await source(
+    "supabase/migrations/20261007000200_theme_image_restore_policy.sql",
+  );
   const themeRoute = await source("src/app/api/admin/themes/route.ts");
   const themeItemRoute = await source("src/app/api/admin/themes/[id]/route.ts");
   const productsRoute = await source("src/app/api/admin/products/route.ts");
@@ -71,6 +74,11 @@ test("admin mutations require authorization and database policies protect data",
   assert.match(customThemes, /site_themes_public_active_read/);
   assert.match(customThemes, /site_themes_admin_insert/);
   assert.match(customThemes, /theme_images_admin_insert/);
+  assert.match(themeImageRestorePolicy, /theme_images_admin_select/);
+  assert.match(themeImageRestorePolicy, /bucket_id = 'theme-images'/);
+  assert.match(themeImageRestorePolicy, /profiles\.role = 'admin'/);
+  assert.match(themeImageRestorePolicy, /theme_images_admin_update/);
+  assert.match(themeImageRestorePolicy, /theme_images_admin_delete/);
   assert.match(themeRoute, /requireAdmin/);
   assert.match(themeRoute, /active_theme_id/);
   assert.match(themeItemRoute, /requireAdmin/);
@@ -87,9 +95,15 @@ test("public workflows include validation, loading/error boundaries, and accessi
   const meetingValidation = await source("src/lib/validations/meetings.ts");
   const meetingApi = await source("src/app/api/meeting-requests/route.ts");
   const header = await source("src/components/public/header.tsx");
+  const states = await source("src/components/public/storefront-states.tsx");
   const catalogControls = await source("src/components/public/catalog-controls.tsx");
   const productCard = await source("src/components/public/product-card.tsx");
   const pagination = await source("src/components/public/pagination.tsx");
+  const home = await source("src/app/(public)/page.tsx");
+  const category = await source("src/app/(public)/category/[slug]/page.tsx");
+  const productDetail = await source("src/app/(public)/product/[slug]/page.tsx");
+  const bookingPage = await source("src/app/(public)/book-a-meeting/page.tsx");
+  const storefrontCss = await source("src/app/globals.css");
   const loading = await source("src/app/(public)/loading.tsx");
   const error = await source("src/app/(public)/error.tsx");
 
@@ -98,12 +112,74 @@ test("public workflows include validation, loading/error boundaries, and accessi
   assert.match(header, /aria-expanded/);
   assert.match(header, /Escape/);
   assert.match(header, /LanguageSwitcher/);
+  assert.match(header, /bookMeeting/);
+  assert.match(home, /getActiveCategories/);
+  assert.match(home, /getFeaturedProducts/);
+  assert.match(home, /localizedValue\(category, "name", language\)/);
+  assert.match(category, /redirect\(`\/shop\/category/);
+  assert.match(productDetail, /ContactActions/);
+  assert.match(bookingPage, /MeetingRequestForm/);
+  assert.match(storefrontCss, /Editorial storefront styling/);
+  assert.match(storefrontCss, /\.public-theme \.storefront/);
   for (const component of [catalogControls, productCard, pagination]) {
     assert.match(component, /^"use client";/);
     assert.match(component, /useLanguage\(/);
   }
-  assert.match(loading, /aria-live/);
-  assert.match(error, /role="button"|<button/);
+  assert.match(loading, /StorefrontLoading/);
+  assert.match(states, /aria-live/);
+  assert.match(error, /StorefrontError/);
+  assert.match(states, /<button/);
+});
+
+test("storefront shell uses theme-managed bilingual announcements and active categories", async () => {
+  const layout = await source("src/app/(public)/layout.tsx");
+  const navigation = await source("src/lib/storefront-navigation.ts");
+  const header = await source("src/components/public/header.tsx");
+  const announcement = await source("src/components/public/announcement-bar.tsx");
+  const theme = await source("src/lib/custom-themes.ts");
+  const themeForm = await source("src/components/admin/theme-form.tsx");
+  const catalog = await source("src/lib/catalog.ts");
+  const globalError = await source("src/app/global-error.tsx");
+  assert.match(layout, /getActiveCategories/);
+  assert.match(layout, /categoryResult\.failed/);
+  assert.match(navigation, /categories\.find/);
+  assert.match(header, /aria-modal="true"/);
+  assert.match(header, /onKeyDown/);
+  assert.match(header, /sort=newest/);
+  assert.match(announcement, /sessionStorage/);
+  assert.match(theme, /announcement_bn/);
+  assert.match(themeForm, /occasion_category_ids/);
+  assert.match(catalog, /created_at/);
+  assert.match(globalError, /<html/);
+  assert.match(globalError, /onClick=\{reset\}/);
+});
+
+test("editorial homepage maps discovery and optional prices without inventing catalog facets", async () => {
+  const home = await source("src/app/(public)/page.tsx");
+  const theme = await source("src/lib/custom-themes.ts");
+  const themeForm = await source("src/components/admin/theme-form.tsx");
+  const pricing = await source("src/lib/validations/catalog-admin.ts");
+  const migration = await source(
+    "supabase/migrations/20261007000100_product_pricing.sql",
+  );
+  const card = await source("src/components/public/product-card.tsx");
+  const product = await source("src/app/(public)/product/[slug]/page.tsx");
+  assert.match(home, /<DiscoveryCards/);
+  assert.match(home, /resolveDiscoveryLinks/);
+  assert.match(theme, /occasion_links/);
+  assert.match(theme, /show_occasion_section/);
+  assert.match(theme, /show_recipient_section/);
+  assert.match(theme, /show_featured_section/);
+  assert.match(themeForm, /campaign_category_id/);
+  assert.match(themeForm, /Homepage sections/);
+  assert.match(home, /show_occasion_section/);
+  assert.match(home, /show_recipient_section/);
+  assert.match(home, /show_featured_section/);
+  assert.match(pricing, /compare_at_price/);
+  assert.match(migration, /add column if not exists price numeric/);
+  assert.match(card, /priceOnRequest/);
+  assert.match(product, /relatedProducts/);
+  assert.doesNotMatch(home, /newsletter/i);
 });
 
 test("privileged Supabase credentials are kept out of public client utilities", async () => {
@@ -120,4 +196,24 @@ test("privileged Supabase credentials are kept out of public client utilities", 
   assert.match(env, /process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(login, /try \{/);
   assert.match(login, /catch \{/);
+});
+
+test("handoff documentation matches the implemented setup contract", async () => {
+  const readme = await source("README.md");
+  const database = await source("docs/database-setup.md");
+  const deployment = await source("docs/deployment.md");
+  const context = await source("custom_context.md");
+  for (const migration of [
+    "20261006000100_initial_schema.sql",
+    "20261006000200_image_storage.sql",
+    "20261006000300_fix_public_read_policies.sql",
+    "20261006000400_grant_gallery_validator.sql",
+    "20261006000500_custom_themes.sql",
+    "20261007000100_product_pricing.sql",
+  ])
+    assert.match(database, new RegExp(migration.replaceAll(".", "\\.")));
+  assert.match(deployment, /Apply all six migrations/);
+  assert.match(readme, /\/shop\/price\/\[range\]/);
+  assert.match(context, /compatibility redirects/);
+  assert.match(context, /live Supabase integration suite/i);
 });

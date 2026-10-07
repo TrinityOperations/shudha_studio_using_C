@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const meetingRequestSchema = z.object({
   name: z.string().trim().min(1, "Please enter your name.").max(160),
@@ -13,6 +13,18 @@ export const meetingRequestSchema = z.object({
   preferredDate: z.string().min(1, "Please choose a date."),
   preferredTime: z.string().min(1, "Please choose a time."),
   message: z.string().trim().max(5000, "Message must be 5,000 characters or fewer."),
+  meetingType: z
+    .enum(["gift-guidance", "celebration-planning", "product-question", "other"])
+    .default("gift-guidance"),
+  productSlug: z
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .max(120)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/i),
+    ])
+    .optional(),
   website: z.string().max(0, "Please leave this field empty."),
   submissionLanguage: z.enum(["en", "bn"]).default("en"),
 });

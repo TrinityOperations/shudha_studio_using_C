@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { DeleteButton } from "@/components/admin/delete-button";
+import { ImportBackupButton } from "@/components/admin/backup-controls";
 import { PageContainer } from "@/components/public/page-container";
 import { getAdminProducts } from "@/lib/admin-catalog";
 import { requireAdmin } from "@/lib/auth/server";
@@ -26,7 +27,18 @@ export default async function AdminProductsPage() {
               {translate(language, "products")}
             </h1>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <ImportBackupButton
+              endpoint="/api/admin/catalog/import"
+              label="Import catalog"
+            />
+            <a
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold"
+              download
+              href="/api/admin/catalog/export"
+            >
+              Export catalog
+            </a>
             <a
               className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold"
               href="/admin"

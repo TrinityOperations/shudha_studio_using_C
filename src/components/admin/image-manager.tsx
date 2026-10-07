@@ -7,10 +7,11 @@ import { getCategoryImageUrl, getProductImageUrl } from "@/lib/catalog-images";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { GalleryImage } from "@/types/catalog";
 import { useLanguage } from "@/components/language-provider";
-
-const MAX_BYTES = 5 * 1024 * 1024;
-const MAX_GALLERY = 10;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+import {
+  MAX_GALLERY_IMAGES,
+  validateImage,
+  safeFileName,
+} from "@/lib/image-validation";
 
 type ImageManagerProps = {
   kind: "category" | "product";
@@ -49,8 +50,8 @@ export function ImageManager({
       setError(validationError);
       return;
     }
-    if (purpose === "gallery" && gallery.length >= MAX_GALLERY) {
-      setError(t("maxGallery", { count: MAX_GALLERY }));
+    if (purpose === "gallery" && gallery.length >= MAX_GALLERY_IMAGES) {
+      setError(t("maxGallery", { count: MAX_GALLERY_IMAGES }));
       return;
     }
 
@@ -156,7 +157,7 @@ export function ImageManager({
           </div>
           <div className="flex flex-wrap gap-2">
             <button
-              className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              className="admin-button rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={busy}
               onClick={() => mainInput.current?.click()}
               type="button"
@@ -165,7 +166,7 @@ export function ImageManager({
             </button>
             {mainPath ? (
               <button
-                className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50"
+                className="admin-button admin-button-danger rounded-lg px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={busy}
                 onClick={() => remove(mainPath, "main")}
                 type="button"
@@ -192,8 +193,8 @@ export function ImageManager({
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-slate-950">{t("gallery")}</h3>
             <button
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50"
-              disabled={busy || gallery.length >= MAX_GALLERY}
+              className="admin-button admin-button-secondary rounded-lg px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={busy || gallery.length >= MAX_GALLERY_IMAGES}
               onClick={() => galleryInput.current?.click()}
               type="button"
             >
@@ -243,40 +244,5 @@ export function ImageManager({
         </div>
       ) : null}
     </section>
-  );
-}
-
-async function validateImage(
-  file: File,
-  t: ReturnType<typeof useLanguage>["t"],
-): Promise<string | null> {
-  if (!ALLOWED_TYPES.has(file.type)) return t("imageTypes");
-  if (file.size <= 0 || file.size > MAX_BYTES) return t("imageSize");
-  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  const valid =
-    file.type === "image/jpeg"
-      ? header[0] === 0xff && header[1] === 0xd8
-      : file.type === "image/png"
-        ? header[0] === 0x89 &&
-          header[1] === 0x50 &&
-          header[2] === 0x4e &&
-          header[3] === 0x47
-        : header[0] === 0x52 &&
-          header[1] === 0x49 &&
-          header[2] === 0x46 &&
-          header[3] === 0x46 &&
-          header[8] === 0x57 &&
-          header[9] === 0x45 &&
-          header[10] === 0x42 &&
-          header[11] === 0x50;
-  return valid ? null : t("imageMismatch");
-}
-
-function safeFileName(name: string) {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, "-")
-      .slice(-80) || "image"
   );
 }

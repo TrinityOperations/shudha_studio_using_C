@@ -105,10 +105,14 @@ for required values, and do not put secrets in variables prefixed with
 ### Public routes
 
 - `/` — home page and contact section.
-- `/products` — searchable, filterable, paginated catalog.
-- `/category/[slug]` — active category listing.
-- `/product/[slug]` — active product detail page.
-- `/book-a-meeting` — public meeting-request form.
+- `/shop` ? searchable, filterable, paginated catalog.
+- `/search` ? URL-driven catalog search.
+- `/shop/category/[slug]` ? active category listing.
+- `/shop/occasion/[slug]` and `/shop/recipient/[slug]` ? configured discovery views.
+- `/shop/price/[range]` ? configured price-range view.
+- `/products` and `/category/[slug]` ? compatibility redirects.
+- `/product/[slug]` ? active product detail page.
+- `/book-a-meeting` ? public meeting-request form.
 
 ### Admin routes
 
@@ -131,7 +135,8 @@ for required values, and do not put secrets in variables prefixed with
 - `POST /api/admin/products` — create a product.
 - `PATCH`/`DELETE /api/admin/products/[id]` — modify or delete a product.
 - `PATCH /api/admin/images/[kind]/[id]` — update image references.
-- `PATCH /api/admin/settings` — legacy preset activation endpoint retained for
+- `GET`/`POST`/`PATCH /api/admin/themes` and `PATCH`/`DELETE /api/admin/themes/[id]` ? custom theme management and activation.
+- `PATCH /api/admin/settings` ? legacy preset activation endpoint retained for
   compatibility; the admin UI uses the custom theme endpoints.
 
 Every admin page and admin mutation calls `requireAdmin()` or an equivalent

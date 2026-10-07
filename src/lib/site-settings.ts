@@ -2,8 +2,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   customThemeRowSchema,
   defaultThemeColors,
+  getHomepageThemeContent,
   type CustomTheme,
 } from "@/lib/custom-themes";
+import { migrateLegacyDiscoveryContent } from "@/lib/storefront-navigation";
 import { normalizeTheme, type SiteTheme } from "@/lib/theme";
 
 export type SiteSettings = {
@@ -52,7 +54,13 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     logo_alt_en: null,
     logo_alt_bn: null,
   };
-  const theme = customThemeRowSchema.parse(rawTheme ?? fallbackTheme);
+  const parsedTheme = customThemeRowSchema.parse(rawTheme ?? fallbackTheme);
+  const theme = {
+    ...parsedTheme,
+    content: getHomepageThemeContent(
+      migrateLegacyDiscoveryContent(parsedTheme.content as Record<string, unknown>),
+    ),
+  };
   return {
     ...data,
     active_theme: normalizeTheme(data.active_theme),

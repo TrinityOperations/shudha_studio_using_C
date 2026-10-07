@@ -1,6 +1,6 @@
 # Supabase setup
 
-This guide applies the five migrations currently used by the application. Apply
+This guide applies the six migrations currently used by the application. Apply
 them in filename order:
 
 1. `supabase/migrations/20261006000100_initial_schema.sql`
@@ -8,6 +8,7 @@ them in filename order:
 3. `supabase/migrations/20261006000300_fix_public_read_policies.sql`
 4. `supabase/migrations/20261006000400_grant_gallery_validator.sql`
 5. `supabase/migrations/20261006000500_custom_themes.sql`
+6. `supabase/migrations/20261007000100_product_pricing.sql`
 
 The first migration creates the relational schema, functions, triggers, grants,
 RLS policies, and the singleton site-settings row. The second migration adds
@@ -20,7 +21,9 @@ product gallery validator during product inserts and updates; product RLS
 authorization is unchanged.
 The fifth migration adds editable saved themes, seeds the Everyday, Wedding, and
 Festival presets, adds the active-theme reference, creates the public
-`theme-images` bucket, and restricts theme management to administrators.
+`theme-images` bucket, and restricts theme management to administrators. The sixth
+migration adds nullable product pricing, compare-at pricing, and the default USD
+currency code; it must be applied before deploying code that selects those columns.
 
 ## Prerequisites
 
@@ -55,7 +58,11 @@ keys in committed documentation or migration files.
 15. Copy the complete contents of
     `supabase/migrations/20261006000500_custom_themes.sql` into the query.
 16. Run it after the gallery-validator migration succeeds.
-17. Confirm the tables, buckets, functions, grants, and policies listed below.
+17. Create another SQL Editor query.
+18. Copy the complete contents of
+    `supabase/migrations/20261007000100_product_pricing.sql` into the query.
+19. Run it after the custom-themes migration succeeds.
+20. Confirm the tables, buckets, functions, grants, and policies listed below.
 
 The migrations use `if exists`, `if not exists`, and policy replacement patterns
 for their owned objects. Do not edit an applied production migration. Add a new
@@ -172,7 +179,7 @@ feature, after reviewing the relevant RLS and operational permissions.
 
 ## Custom theme workflow
 
-After applying the fifth migration, open `/admin/themes` to create, edit, activate,
+After applying the fifth and sixth migrations, open `/admin/themes` to create, edit, activate,
 and delete themes. Save a theme before uploading its logo, background, or hero
 image. Images use the public `theme-images` bucket and accept JPEG, PNG, and WebP
 files up to 5 MiB. The active theme cannot be deleted.

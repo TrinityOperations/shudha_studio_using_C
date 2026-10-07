@@ -10,7 +10,7 @@ a static-only export.
 Before deploying, complete these tasks:
 
 1. Create or select the production Supabase project.
-2. Apply all five migrations in
+2. Apply all six migrations in
    [`database-setup.md`](database-setup.md).
 3. Verify RLS, Storage buckets, and the singleton `site_settings` row.
 4. Create and promote at least one administrator using

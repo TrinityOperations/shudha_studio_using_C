@@ -34,6 +34,9 @@ export type Product = {
   seo_description_en: string | null;
   is_available: boolean;
   is_featured: boolean;
+  price: number | null;
+  compare_at_price: number | null;
+  currency_code: string;
   main_image_path: string | null;
   main_image_alt_en: string | null;
   main_image_alt_bn?: string | null;

@@ -1,24 +1,46 @@
 import { Footer } from "@/components/public/footer";
+import { AnnouncementBar } from "@/components/public/announcement-bar";
+import {
+  OfflineNotice,
+  StorefrontSkipLink,
+} from "@/components/public/storefront-states";
 import type { CSSProperties } from "react";
 import { Header } from "@/components/public/header";
 import { LanguageProvider } from "@/components/language-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getThemeImageUrl } from "@/lib/theme-images";
+import { getActiveCategories } from "@/lib/catalog";
+import { buildStorefrontGroups } from "@/lib/storefront-navigation";
+import { getPreferredLanguage } from "@/lib/i18n/server-language";
+import { readablePrimaryColor } from "@/lib/theme-contrast";
 
 export default async function PublicLayout({ children }: LayoutProps<"/">) {
   const settings = await getSiteSettings();
+  const language = await getPreferredLanguage(settings.default_language);
+  const primary = readablePrimaryColor(
+    settings.theme.colors.primary,
+    settings.theme.colors.primaryHover,
+  );
+  const categoryResult = await getActiveCategories()
+    .then((categories) => ({ categories, failed: false }))
+    .catch(() => ({ categories: [], failed: true }));
+  const groups = buildStorefrontGroups(
+    categoryResult.categories,
+    settings.theme.content,
+  );
 
   return (
-    <LanguageProvider defaultLanguage={settings.default_language}>
+    <LanguageProvider defaultLanguage={language}>
       <div
         className="public-theme flex min-h-screen flex-col"
         data-theme={settings.active_theme}
+        lang={language}
         style={
           {
             "--theme-background-image": settings.theme.background_path
               ? `url(${getThemeImageUrl(settings.theme.background_path)})`
               : "none",
-            "--theme-primary": settings.theme.colors.primary,
+            "--theme-primary": primary,
             "--theme-primary-hover": settings.theme.colors.primaryHover,
             "--theme-primary-soft": settings.theme.colors.primarySoft,
             "--theme-background": settings.theme.colors.background,
@@ -33,25 +55,30 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
           } as CSSProperties
         }
       >
-        <a
-          className="sr-only z-50 rounded-md bg-white px-4 py-3 text-slate-950 focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
-          href="#main-content"
-        >
-          Skip to content
-        </a>
+        <StorefrontSkipLink />
+        <AnnouncementBar
+          bangla={settings.theme.content.announcement_bn}
+          english={settings.theme.content.announcement_en}
+          key={`${settings.theme.id}:${settings.theme.content.announcement_en}:${settings.theme.content.announcement_bn}`}
+          themeId={settings.theme.id}
+        />
+        <OfflineNotice />
         <Header
           businessName={settings.business_name_en}
           businessNameBn={settings.business_name_bn}
-          phone={settings.phone}
-          whatsapp={settings.whatsapp}
+          categoryError={categoryResult.failed}
+          groups={groups}
           logoPath={settings.theme.logo_path}
           logoAlt={settings.theme.logo_alt_en}
+          logoAltBn={settings.theme.logo_alt_bn}
         />
         <div className="flex-1">{children}</div>
         <Footer
           address={settings.address_en}
           addressBn={settings.address_bn}
           businessName={settings.business_name_en}
+          businessNameBn={settings.business_name_bn}
+          groups={groups}
           email={settings.email}
           phone={settings.phone}
           whatsapp={settings.whatsapp}

@@ -37,6 +37,7 @@ export function LanguageProvider({
   const [language, setLanguageState] = useState<SupportedLanguage>(defaultLanguage);
 
   useEffect(() => {
+    document.documentElement.lang = defaultLanguage;
     const saved = window.localStorage.getItem(LANGUAGE_COOKIE);
     const savedLanguage: SupportedLanguage | null = isSupportedLanguage(
       saved ?? undefined,
@@ -45,9 +46,12 @@ export function LanguageProvider({
       : null;
     if (savedLanguage) {
       // The timeout keeps the server-rendered default stable during hydration.
-      window.setTimeout(() => setLanguageState(savedLanguage), 0);
+      window.setTimeout(() => {
+        setLanguageState(savedLanguage);
+        document.documentElement.lang = savedLanguage;
+      }, 0);
     }
-  }, []);
+  }, [defaultLanguage]);
 
   const setLanguage = useCallback(
     (next: SupportedLanguage) => {

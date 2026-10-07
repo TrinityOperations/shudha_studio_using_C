@@ -8,8 +8,12 @@ export async function POST(request: Request) {
   await requireAdmin();
   const parsed = productAdminSchema.safeParse(await request.json());
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
     return NextResponse.json(
-      { error: "Please correct the product fields." },
+      {
+        error: issue?.message ?? "Please correct the product fields.",
+        field: issue?.path.join(".") || undefined,
+      },
       { status: 400 },
     );
   }

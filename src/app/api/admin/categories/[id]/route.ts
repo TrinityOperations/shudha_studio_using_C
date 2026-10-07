@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth/server";
@@ -17,7 +18,15 @@ export async function PATCH(request: Request, context: Context) {
     );
   }
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("categories").update(parsed.data).eq("id", id);
+  const { data, error } = await supabase
+    .from("categories")
+    .update(parsed.data)
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (!error && !data) {
+    return NextResponse.json({ error: "Category not found." }, { status: 404 });
+  }
   if (error) {
     return NextResponse.json(
       {
@@ -29,6 +38,7 @@ export async function PATCH(request: Request, context: Context) {
       { status: error.code === "23505" ? 409 : 400 },
     );
   }
+  revalidatePath("/", "layout");
   return NextResponse.json({ updated: true });
 }
 
@@ -36,7 +46,15 @@ export async function DELETE(_request: Request, context: Context) {
   await requireAdmin();
   const { id } = await context.params;
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("categories").delete().eq("id", id);
+  const { data, error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (!error && !data) {
+    return NextResponse.json({ error: "Category not found." }, { status: 404 });
+  }
   if (error) {
     return NextResponse.json(
       {
@@ -48,5 +66,6 @@ export async function DELETE(_request: Request, context: Context) {
       { status: error.code === "23503" ? 409 : 400 },
     );
   }
+  revalidatePath("/", "layout");
   return NextResponse.json({ deleted: true });
 }

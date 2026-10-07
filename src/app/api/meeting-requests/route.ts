@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+﻿import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getServerEnv } from "@/lib/env";
@@ -9,6 +9,7 @@ import {
   meetingRequestSchema,
 } from "@/lib/validations/meetings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getPublicProductBySlug } from "@/lib/catalog";
 
 export async function POST(request: Request) {
   try {
@@ -64,6 +65,38 @@ export async function POST(request: Request) {
       );
     }
 
+    const meetingLabels = {
+      "gift-guidance": "Gift guidance",
+      "celebration-planning": "Celebration planning",
+      "product-question": "Product question",
+      other: "Other",
+    };
+    let productName = "";
+    if (input.productSlug) {
+      try {
+        const product = await getPublicProductBySlug(input.productSlug);
+        productName = product.name_en;
+      } catch {
+        return NextResponse.json(
+          { error: "That product is no longer available. Please choose it again." },
+          { status: 400 },
+        );
+      }
+    }
+    const storedMessage = [
+      `[${meetingLabels[input.meetingType]}]`,
+      productName ? `Product: ${productName} (${input.productSlug})` : "",
+      input.message,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    if (storedMessage.length > 5000) {
+      return NextResponse.json(
+        { error: "Please keep your message within 5,000 characters." },
+        { status: 400 },
+      );
+    }
+
     const preferredAt = combineMeetingDateTime(
       input.preferredDate,
       input.preferredTime,
@@ -89,7 +122,7 @@ export async function POST(request: Request) {
       phone: input.phone,
       email: input.email || null,
       preferred_at: preferredAt,
-      message: input.message || null,
+      message: storedMessage || null,
       submission_language: input.submissionLanguage,
       status: "pending",
       submission_key: submissionKey,

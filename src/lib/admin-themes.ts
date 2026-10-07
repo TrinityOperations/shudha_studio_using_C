@@ -1,5 +1,20 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { customThemeRowSchema, type CustomTheme } from "@/lib/custom-themes";
+import {
+  customThemeRowSchema,
+  getHomepageThemeContent,
+  type CustomTheme,
+} from "@/lib/custom-themes";
+import { migrateLegacyDiscoveryContent } from "@/lib/storefront-navigation";
+
+function parseAdminTheme(input: unknown): CustomTheme {
+  const theme = customThemeRowSchema.parse(input);
+  return {
+    ...theme,
+    content: getHomepageThemeContent(
+      migrateLegacyDiscoveryContent(theme.content as Record<string, unknown>),
+    ),
+  };
+}
 
 export async function getAdminThemes(): Promise<CustomTheme[]> {
   const supabase = await createSupabaseServerClient();
@@ -8,7 +23,7 @@ export async function getAdminThemes(): Promise<CustomTheme[]> {
     .select("*")
     .order("created_at");
   if (error) throw new Error("Unable to load themes.");
-  return (data ?? []).map((theme) => customThemeRowSchema.parse(theme));
+  return (data ?? []).map(parseAdminTheme);
 }
 
 export async function getAdminTheme(id: string): Promise<CustomTheme> {
@@ -19,5 +34,5 @@ export async function getAdminTheme(id: string): Promise<CustomTheme> {
     .eq("id", id)
     .single();
   if (error || !data) throw new Error("Theme not found.");
-  return customThemeRowSchema.parse(data);
+  return parseAdminTheme(data);
 }

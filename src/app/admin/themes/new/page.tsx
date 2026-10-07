@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { PageContainer } from "@/components/public/page-container";
 import { ThemeForm } from "@/components/admin/theme-form";
 import { requireAdmin } from "@/lib/auth/server";
+import { getAdminCategories } from "@/lib/admin-catalog";
 export const metadata: Metadata = { title: "New theme | Admin | Shudha Studio" };
 export default async function NewThemePage() {
   await requireAdmin();
+  const categories = await getAdminCategories();
   return (
     <main className="min-h-screen bg-slate-100 py-10">
       <PageContainer>
@@ -14,7 +16,7 @@ export default async function NewThemePage() {
           </a>
           <h1 className="mt-4 text-3xl font-semibold">Create theme</h1>
           <div className="mt-8">
-            <ThemeForm />
+            <ThemeForm categories={categories} />
           </div>
         </div>
       </PageContainer>

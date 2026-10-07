@@ -5,7 +5,74 @@
   --foreground: #0f172a;
 }
 
+.admin-button,
+.admin-file-picker {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+.admin-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.admin-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+.admin-button:focus-visible,
+.admin-file-picker:focus-visible {
+  outline: 3px solid rgb(244 63 94 / 35%);
+  outline-offset: 3px;
+}
+.admin-button-primary {
+  background-color: #be123c;
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 12%);
+}
+.admin-button-primary:hover:not(:disabled) {
+  background-color: #9f1239;
+  box-shadow: 0 4px 10px rgb(159 18 57 / 22%);
+}
+.admin-button-primary:active:not(:disabled) {
+  background-color: #881337;
+  box-shadow: inset 0 2px 4px rgb(15 23 42 / 18%);
+}
+.admin-button-primary:disabled {
+  background-color: #be123c;
+}
+.admin-button-secondary:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+.admin-button-danger:hover:not(:disabled) {
+  background-color: #fef2f2;
+}
+.admin-file-picker::file-selector-button {
+  margin-right: 0.75rem;
+  border: 0;
+  border-right: 1px solid #cbd5e1;
+  background: #f8fafc;
+  padding: 0.65rem 0.9rem;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.admin-file-picker:hover::file-selector-button {
+  background: #e2e8f0;
+  color: #881337;
+}
+.admin-file-picker:active::file-selector-button {
+  background: #cbd5e1;
+}
+
 .public-theme {
+  --store-radius: 1rem;
+  --store-shadow: 0 14px 38px rgb(30 24 20 / 12%);
+  --store-space: 1rem;
   --theme-background: #ffffff;
   --theme-surface: #ffffff;
   --theme-muted-surface: #f8fafc;
@@ -24,6 +91,76 @@
   background-size: cover;
   background-attachment: fixed;
   color: var(--theme-foreground);
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+/* Storefront shell primitives: scoped so admin controls keep their own styling. */
+.public-theme .store-header,
+.public-theme .store-drawer,
+.public-theme .store-dropdown {
+  background: var(--theme-surface);
+  border-color: var(--theme-border);
+  color: var(--theme-foreground);
+}
+.public-theme .store-header {
+  box-shadow: var(--store-shadow);
+}
+.public-theme .store-drawer,
+.public-theme .store-dropdown {
+  border-radius: var(--store-radius);
+}
+.public-theme .store-announcement {
+  background: var(--theme-hero);
+  color: #fff;
+}
+.public-theme .store-offline {
+  background: var(--theme-primary-soft);
+  color: var(--theme-foreground);
+}
+.public-theme .store-search,
+.public-theme .store-state {
+  border-color: var(--theme-border);
+  background: var(--theme-muted-surface);
+  color: var(--theme-foreground);
+}
+.public-theme .store-search {
+  border: 1px solid var(--theme-border);
+  gap: calc(var(--store-space) / 2);
+}
+.public-theme .store-primary {
+  background: var(--theme-primary);
+  color: white;
+}
+.public-theme .store-focus:focus-visible,
+.public-theme a:focus-visible,
+.public-theme button:focus-visible,
+.public-theme select:focus-visible,
+.public-theme input:focus-visible,
+.public-theme textarea:focus-visible {
+  outline: 3px solid var(--theme-primary);
+  outline-offset: 3px;
+}
+.public-theme .store-primary:hover {
+  background: var(--theme-primary-hover);
+}
+.public-theme .store-focus:focus-visible,
+.public-theme .store-search:focus-within {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-theme *,
+  .public-theme *::before,
+  .public-theme *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+  .public-theme .animate-pulse {
+    animation: none;
+  }
 }
 
 .public-theme[data-theme="wedding"] {
@@ -101,6 +238,211 @@
 .public-theme .form-input:focus {
   border-color: var(--theme-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary-soft) 60%, transparent);
+}
+
+/* Editorial storefront styling. These rules are scoped away from administration. */
+.public-theme .storefront,
+.public-theme .store-header,
+.public-theme .store-footer,
+.public-theme .store-booking {
+  font-family:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia,
+    "Noto Serif Bengali", serif;
+}
+
+.public-theme .storefront,
+.public-theme .store-header,
+.public-theme .store-footer,
+.public-theme .store-booking {
+  font-family: Arial, Helvetica, "Noto Sans Bengali", sans-serif;
+}
+
+.public-theme .store-display {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  text-wrap: balance;
+}
+
+.public-theme:lang(bn) .store-display {
+  font-family: Arial, Helvetica, "Noto Sans Bengali", sans-serif;
+}
+
+.public-theme .store-hero {
+  background-color: var(--theme-hero);
+}
+
+.public-theme .store-hero > img {
+  z-index: 0;
+  opacity: 0.42;
+}
+
+.public-theme .store-hero-glow {
+  background:
+    radial-gradient(
+      circle at 86% 16%,
+      color-mix(in srgb, var(--theme-hero-accent) 34%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(110deg, transparent 40%, rgb(255 255 255 / 3%));
+}
+
+.public-theme .store-card {
+  border-color: var(--theme-border);
+  background: var(--theme-surface);
+  box-shadow: 0 2px 10px rgb(30 24 20 / 4%);
+}
+.public-theme .store-card > a {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.public-theme .store-card > a > :last-child {
+  flex: 1;
+}
+
+.public-theme .store-card:hover {
+  box-shadow: 0 18px 42px rgb(30 24 20 / 12%);
+}
+
+.public-theme .store-category {
+  border-color: var(--theme-border);
+  background-color: var(--theme-muted-surface);
+}
+
+.public-theme .store-category-art {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgb(255 255 255 / 70%), transparent 34%),
+    linear-gradient(140deg, var(--theme-primary-soft), var(--theme-muted-surface));
+}
+
+.public-theme .store-category-art-1 {
+  background-image:
+    radial-gradient(circle at 75% 25%, rgb(255 255 255 / 75%), transparent 30%),
+    linear-gradient(140deg, var(--theme-hero-highlight), var(--theme-primary-soft));
+}
+
+.public-theme .store-category-art-2 {
+  background-image:
+    radial-gradient(circle at 22% 75%, rgb(255 255 255 / 70%), transparent 34%),
+    linear-gradient(140deg, var(--theme-hero-accent), var(--theme-primary-soft));
+}
+
+.public-theme .store-category-art-3 {
+  background-image:
+    radial-gradient(circle at 75% 75%, rgb(255 255 255 / 70%), transparent 32%),
+    linear-gradient(140deg, var(--theme-primary-soft), var(--theme-hero-highlight));
+}
+
+.public-theme .store-discovery-section {
+  color: var(--theme-foreground);
+}
+
+.public-theme .store-discovery-section .bg-white {
+  background: transparent !important;
+}
+
+.public-theme .store-discovery-card {
+  border-color: var(--theme-border);
+  background: var(--theme-muted-surface);
+}
+
+.public-theme .store-campaign-panel {
+  background:
+    radial-gradient(
+      circle at 88% 8%,
+      color-mix(in srgb, var(--theme-hero-highlight) 30%, transparent),
+      transparent 32%
+    ),
+    linear-gradient(
+      120deg,
+      var(--theme-hero),
+      color-mix(in srgb, var(--theme-hero-accent) 34%, var(--theme-hero))
+    );
+  color: #fff;
+}
+
+.public-theme .store-campaign-cta {
+  background: #fff;
+  color: var(--theme-hero);
+}
+
+.public-theme .store-values,
+.public-theme .store-meeting-cta,
+.public-theme .store-story {
+  background: var(--theme-muted-surface);
+}
+
+.public-theme .store-value-card {
+  border-color: var(--theme-border);
+  background: var(--theme-surface);
+}
+
+.public-theme .store-link {
+  color: var(--theme-primary);
+}
+
+.public-theme .store-filter,
+.public-theme .store-contact-card,
+.public-theme .store-inquiry,
+.public-theme .store-booking-card {
+  border-color: var(--theme-border);
+  background-color: var(--theme-muted-surface);
+}
+
+.public-theme .store-input,
+.public-theme .store-booking-card .form-input {
+  border-color: var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-foreground);
+}
+
+.public-theme .store-input::placeholder {
+  color: var(--theme-muted-foreground);
+  opacity: 1;
+}
+
+.public-theme :lang(bn) {
+  line-height: 1.75;
+}
+
+.public-theme .store-display {
+  letter-spacing: -0.015em;
+}
+
+.public-theme:lang(bn) .store-display {
+  letter-spacing: 0;
+}
+
+.public-theme .store-page-banner {
+  background-image: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--theme-hero) 96%, black),
+    var(--theme-hero)
+  );
+}
+
+.public-theme .store-button {
+  background-color: var(--theme-primary);
+}
+
+.public-theme .store-button:hover {
+  background-color: var(--theme-primary-hover);
+}
+
+.public-theme .store-availability {
+  border-color: color-mix(in srgb, var(--theme-primary) 24%, white);
+}
+
+@media (max-width: 767px) {
+  .public-theme .store-hero {
+    background-position: 62% center;
+  }
+
+  .public-theme .store-header nav[aria-label] {
+    max-height: calc(100dvh - 4.5rem);
+    overflow-y: auto;
+  }
 }
 
 .public-theme [class*="bg-[radial-gradient"] {

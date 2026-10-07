@@ -44,14 +44,16 @@ export default async function EditProductPage({
                 id: category.id,
                 name_en: category.name_en,
               }))}
-            />
-            <ImageManager
-              id={id}
-              initialGallery={
-                Array.isArray(product.gallery_images) ? product.gallery_images : []
+              imageManager={
+                <ImageManager
+                  id={id}
+                  initialGallery={
+                    Array.isArray(product.gallery_images) ? product.gallery_images : []
+                  }
+                  initialMainPath={product.main_image_path}
+                  kind="product"
+                />
               }
-              initialMainPath={product.main_image_path}
-              kind="product"
             />
           </div>
         </div>

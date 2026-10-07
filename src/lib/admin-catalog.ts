@@ -31,7 +31,7 @@ export async function getAdminProducts() {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, slug, name_en, name_bn, description_en, description_bn, seo_title_en, seo_title_bn, seo_description_en, seo_description_bn, is_active, is_available, is_featured, sort_order, main_image_path, gallery_images, categories(name_en)",
+      "id, category_id, slug, name_en, name_bn, description_en, description_bn, seo_title_en, seo_title_bn, seo_description_en, seo_description_bn, is_active, is_available, is_featured, sort_order, price, compare_at_price, currency_code, main_image_path, gallery_images, categories(name_en)",
     )
     .order("sort_order")
     .order("name_en");
@@ -44,7 +44,7 @@ export async function getAdminProduct(id: string) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, category_id, slug, name_en, name_bn, description_en, description_bn, seo_title_en, seo_title_bn, seo_description_en, seo_description_bn, is_active, is_available, is_featured, sort_order, main_image_path, gallery_images",
+      "id, category_id, slug, name_en, name_bn, description_en, description_bn, seo_title_en, seo_title_bn, seo_description_en, seo_description_bn, is_active, is_available, is_featured, sort_order, price, compare_at_price, currency_code, main_image_path, gallery_images",
     )
     .eq("id", id)
     .maybeSingle();

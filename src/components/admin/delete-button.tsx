@@ -39,7 +39,7 @@ export function DeleteButton({
   return (
     <>
       <button
-        className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+        className="admin-button admin-button-danger rounded-lg px-3 py-2 text-sm font-semibold"
         onClick={() => setIsOpen(true)}
         type="button"
       >
@@ -59,14 +59,14 @@ export function DeleteButton({
             {error ? <p className="mt-4 text-sm text-red-700">{error}</p> : null}
             <div className="mt-6 flex justify-end gap-3">
               <button
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
+                className="admin-button admin-button-secondary rounded-lg px-4 py-2 text-sm font-semibold"
                 onClick={() => setIsOpen(false)}
                 type="button"
               >
                 {t("cancel")}
               </button>
               <button
-                className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="admin-button rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isDeleting}
                 onClick={remove}
                 type="button"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageContainer } from "@/components/public/page-container";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { ImportBackupButton } from "@/components/admin/backup-controls";
 import { ThemeActivateButton } from "@/components/admin/theme-activate-button";
 import { requireAdmin } from "@/lib/auth/server";
 import { getAdminThemes } from "@/lib/admin-themes";
@@ -25,7 +26,11 @@ export default async function ThemesPage() {
               Create reusable colors, writing, logos, and images for the public website.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <ImportBackupButton
+              endpoint="/api/admin/themes/import"
+              label="Import theme"
+            />
             <a
               className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold"
               href="/admin"
@@ -69,6 +74,13 @@ export default async function ThemesPage() {
                   href={`/admin/themes/${theme.id}/edit`}
                 >
                   Edit
+                </a>
+                <a
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
+                  download
+                  href={`/api/admin/themes/${theme.id}/export`}
+                >
+                  Export
                 </a>
                 {settings.active_theme_id !== theme.id ? (
                   <DeleteButton endpoint={`/api/admin/themes/${theme.id}`} />

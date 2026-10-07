@@ -1,13 +1,30 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowDown, ArrowUpRight, Gift, Sparkles } from "lucide-react";
 
 import { ContactActions } from "@/components/public/contact-actions";
 import { PageContainer } from "@/components/public/page-container";
 import { ProductGrid } from "@/components/public/product-grid";
+import { DiscoveryCards } from "@/components/public/discovery-cards";
+import {
+  CampaignSection,
+  MeetingCta,
+  StorySection,
+  TrustSection,
+} from "@/components/public/homepage-sections";
 import { getActiveCategories, getFeaturedProducts } from "@/lib/catalog";
+import { getCategoryImageUrl, getProductImageUrl } from "@/lib/catalog-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getPreferredLanguage } from "@/lib/i18n/server-language";
 import { localizedValue, translate } from "@/lib/i18n/translations";
 import { getThemeImageUrl } from "@/lib/theme-images";
+import { resolveDiscoveryLinks } from "@/lib/storefront-navigation";
+import type { TranslationKey } from "@/lib/i18n/translations";
+
+const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : "";
 
 export const dynamic = "force-dynamic";
 
@@ -25,55 +42,88 @@ export default async function Home() {
   const language = await getPreferredLanguage(settings.default_language);
   const businessName =
     language === "bn" ? settings.business_name_bn : settings.business_name_en;
-  const content = settings.theme.content as Record<string, unknown>;
-  const text = (key: string, fallback: string) =>
-    typeof content[`${key}_${language}`] === "string" && content[`${key}_${language}`]
-      ? String(content[`${key}_${language}`])
-      : fallback;
-  const rawTags = content[`tags_${language}`];
-  const tags: string[] = Array.isArray(rawTags)
-    ? rawTags.filter((tag: unknown): tag is string => typeof tag === "string")
-    : [];
+  const content = settings.theme.content;
+  const text = (key: string, fallback: string) => {
+    const value = content[`${key}_${language}` as keyof typeof content];
+    return typeof value === "string" && value ? value : fallback;
+  };
+  const occasionLinks = resolveDiscoveryLinks(content.occasion_links, categories);
+  const recipientLinks = resolveDiscoveryLinks(content.recipient_links, categories);
+  const discoveryTitle = (key: string) => translate(language, key as TranslationKey);
+  const campaignCategory = categories.find(
+    (category) => category.id === content.campaign_category_id,
+  );
+  const heroImage = settings.theme.hero_path
+    ? getThemeImageUrl(settings.theme.hero_path)
+    : featuredProducts[0]?.main_image_path
+      ? getProductImageUrl(featuredProducts[0].main_image_path)
+      : null;
+  const shouldOptimize = (url: string) =>
+    Boolean(
+      supabaseHost &&
+      url.startsWith(`https://${supabaseHost}/storage/v1/object/public/`),
+    );
+  const campaignTitle = text(
+    "campaign_title",
+    language === "bn"
+      ? "উৎসব হোক যত্নে বাছাই করা উপহারে"
+      : "A little season of meaning",
+  );
+  const campaignDescription = text(
+    "campaign_description",
+    language === "bn"
+      ? "বিশেষ মুহূর্তে প্রিয়জনের জন্য খুঁজে নিন আন্তরিক উপহার।"
+      : "Find a thoughtful gift for the people and moments that make this season special.",
+  );
+  const tags = content[`tags_${language}`];
+  const localizedHomeText = (key: string, fallback: string) => {
+    const value = content[`${key}_${language}` as keyof typeof content];
+    return typeof value === "string" && value ? value : fallback;
+  };
 
   return (
-    <main id="main-content">
-      <section
-        className="relative overflow-hidden bg-slate-950 text-white"
-        style={{
-          backgroundImage: settings.theme.hero_path
-            ? `linear-gradient(rgb(2 6 23 / 65%), rgb(2 6 23 / 65%)), url(${getThemeImageUrl(settings.theme.hero_path)})`
-            : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(244,63,94,0.35),_transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(251,191,36,0.16),_transparent_35%)]" />
-        <PageContainer className="relative py-20 sm:py-28 lg:py-36">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold tracking-[0.24em] text-rose-300 uppercase">
-              {text("eyebrow", settings.business_name_en)}
+    <main id="main-content" className="storefront">
+      <section className="store-hero relative overflow-hidden bg-slate-950 text-white">
+        {heroImage ? (
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="object-cover"
+            fill
+            priority
+            sizes="100vw"
+            src={heroImage}
+            unoptimized={!shouldOptimize(heroImage)}
+          />
+        ) : null}
+        <div className="store-hero-glow pointer-events-none absolute inset-0" />
+        <PageContainer className="relative grid min-h-[30rem] items-center gap-12 py-12 sm:min-h-[38rem] sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
+          <div className="max-w-2xl">
+            <p className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.22em] text-rose-300 uppercase sm:text-sm">
+              <Sparkles aria-hidden="true" size={15} />
+              {text("eyebrow", businessName)}
             </p>
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+            <h1 className="store-display mt-6 text-4xl leading-[1.12] font-medium tracking-tight sm:text-6xl lg:text-7xl">
               {text(
                 "hero_title",
                 language === "bn"
-                  ? "উপহার যা সাধারণ মুহূর্তকে অসাধারণ করে তোলে।"
-                  : "Gifts that make ordinary moments feel extraordinary.",
+                  ? "উপহার হোক হৃদয়ের ভাষা।"
+                  : "A little something, full of meaning.",
               )}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">
               {text(
                 "hero_description",
                 language === "bn"
-                  ? "প্রতিটি গুরুত্বপূর্ণ উপলক্ষের জন্য যত্নসহকারে বাছাই করা উপহার, আন্তরিক সেবা ও সুন্দর বিবরণ।"
-                  : "Thoughtfully selected gifts, warm personal service, and beautiful details for every meaningful occasion.",
+                  ? "প্রিয় মানুষ আর বিশেষ মুহূর্তের জন্য যত্ন করে বেছে নেওয়া উপহার খুঁজে নিন।"
+                  : "Discover carefully chosen gifts for the people and moments that matter most.",
               )}
             </p>
             {tags.length ? (
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span
-                    className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white"
+                    className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur"
                     key={tag}
                   >
                     {tag}
@@ -81,116 +131,284 @@ export default async function Home() {
                 ))}
               </div>
             ) : null}
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <a
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-rose-600 px-6 font-semibold text-white transition hover:bg-rose-500 focus:ring-2 focus:ring-rose-300 focus:outline-none"
-                href="#contact"
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                className="store-button inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-rose-700 px-6 text-sm font-semibold text-white hover:bg-rose-800"
+                href="/shop"
               >
-                {translate(language, "contactUs")}
-              </a>
-              <a
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 px-6 font-semibold text-white transition hover:bg-white/10 focus:ring-2 focus:ring-rose-300 focus:outline-none"
+                <Gift aria-hidden="true" size={17} />
+                {translate(language, "shopGifts")}
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/40 px-6 text-sm font-semibold text-white transition hover:bg-white/10"
                 href="/book-a-meeting"
               >
                 {translate(language, "bookMeeting")}
-              </a>
-              <ContactActions phone={settings.phone} whatsapp={settings.whatsapp} />
+                <ArrowUpRight aria-hidden="true" size={16} />
+              </Link>
             </div>
-            <a
-              className="mt-8 inline-flex text-sm font-semibold text-rose-300 underline-offset-4 hover:underline"
-              href="/products"
-            >
-              {translate(language, "exploreCollection")}
-            </a>
           </div>
+          <div className="relative mx-auto hidden w-full max-w-md lg:block">
+            <div className="absolute -inset-5 rotate-3 rounded-[2rem] border border-white/20" />
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.6rem] border border-white/20 bg-white/10 shadow-2xl backdrop-blur-sm">
+              {heroImage ? (
+                <Image
+                  alt=""
+                  aria-hidden="true"
+                  className="object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 0px, 40vw"
+                  src={heroImage}
+                  unoptimized={!shouldOptimize(heroImage)}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-white/80">
+                  <Gift aria-hidden="true" size={38} strokeWidth={1.2} />
+                  <span className="text-sm">
+                    {translate(language, "imageComingSoon")}
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-6 pt-20 text-white">
+                <span className="text-xs font-semibold tracking-[0.16em] uppercase">
+                  {translate(language, "meaningfulMoments")}
+                </span>
+                {featuredProducts[0] ? (
+                  <p className="mt-2 text-xl font-semibold">
+                    {localizedValue(featuredProducts[0], "name", language)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          <a
+            className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 items-center gap-2 text-xs font-medium text-white/70 lg:inline-flex"
+            href="#discover"
+          >
+            <ArrowDown aria-hidden="true" size={14} />
+            {translate(language, "browse")}
+          </a>
         </PageContainer>
       </section>
 
-      <section className="bg-slate-50">
-        <PageContainer className="py-16 sm:py-24">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-semibold tracking-[0.2em] text-rose-700 uppercase">
-                {text("featured_heading", translate(language, "featuredGifts"))}
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                {text("featured_heading", translate(language, "meaningfulMoments"))}
-              </h2>
+      {tags.length ? (
+        <div className="store-tag-strip border-b border-[var(--theme-border)] bg-[var(--theme-surface)] py-3">
+          <PageContainer className="flex flex-wrap justify-center gap-x-7 gap-y-2">
+            {tags.map((tag) => (
+              <span
+                className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[var(--theme-muted-foreground)]"
+                key={tag}
+              >
+                <Sparkles
+                  aria-hidden="true"
+                  className="text-[var(--theme-primary)]"
+                  size={13}
+                />
+                {tag}
+              </span>
+            ))}
+          </PageContainer>
+        </div>
+      ) : null}
+
+      {content.show_categories_section ? (
+        <section
+          className="store-discovery-section border-b border-slate-200 bg-white py-12 sm:py-16"
+          id="discover"
+        >
+          <PageContainer className="py-12 sm:py-16">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <div>
+                <h2 className="store-display mt-3 max-w-xl text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl">
+                  {text(
+                    "categories_heading",
+                    language === "bn"
+                      ? "আপনার পছন্দের উপহার খুঁজুন"
+                      : "Start with what brings you here",
+                  )}
+                </h2>
+              </div>
+              <Link
+                className="store-link inline-flex items-center gap-2 text-sm font-semibold hover:underline"
+                href="/shop"
+              >
+                {translate(language, "viewAllProducts")}
+                <ArrowUpRight aria-hidden="true" size={16} />
+              </Link>
             </div>
-            <a
-              className="text-sm font-semibold text-rose-700 hover:underline"
-              href="/products"
-            >
-              {translate(language, "viewAllProducts")} →
-            </a>
-          </div>
-          <div className="mt-8">
+            {categories.length ? (
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {categories.map((category, index) => {
+                  const imageUrl = getCategoryImageUrl(category.image_path ?? null);
+                  return (
+                    <Link
+                      className="store-category group relative flex min-h-56 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 p-5 sm:min-h-64"
+                      href={`/shop/category/${category.slug}`}
+                      key={category.id}
+                    >
+                      {imageUrl ? (
+                        <Image
+                          alt={
+                            localizedValue(category, "image_alt", language) ||
+                            localizedValue(category, "name", language)
+                          }
+                          className="object-cover transition duration-500 group-hover:scale-105"
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          src={imageUrl}
+                          unoptimized={
+                            !supabaseHost ||
+                            !imageUrl.startsWith(
+                              `https://${supabaseHost}/storage/v1/object/public/category-images/`,
+                            )
+                          }
+                        />
+                      ) : (
+                        <div
+                          aria-hidden="true"
+                          className={`store-category-art absolute inset-0 store-category-art-${index % 4}`}
+                        >
+                          <Gift
+                            className="absolute right-5 bottom-5 h-16 w-16 opacity-20"
+                            strokeWidth={1}
+                          />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/5 to-transparent" />
+                      <div className="relative mt-auto flex w-full items-end justify-between gap-3 text-white">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {localizedValue(category, "name", language)}
+                          </h3>
+                          {localizedValue(category, "description", language) ? (
+                            <p className="mt-1 line-clamp-2 text-sm text-white/80">
+                              {localizedValue(category, "description", language)}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/60 transition group-hover:bg-white group-hover:text-slate-900">
+                          <ArrowUpRight aria-hidden="true" size={16} />
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-8 rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
+                {translate(language, "categoriesComingSoon")}
+              </p>
+            )}
+          </PageContainer>
+        </section>
+      ) : null}
+
+      {content.show_occasion_section ? (
+        <DiscoveryCards
+          id="occasions"
+          items={occasionLinks}
+          language={language}
+          title={discoveryTitle("shopByOccasion")}
+        />
+      ) : null}
+      {content.show_recipient_section ? (
+        <DiscoveryCards
+          id="recipients"
+          items={recipientLinks}
+          language={language}
+          title={discoveryTitle("shopByRecipient")}
+        />
+      ) : null}
+
+      {content.show_featured_section ? (
+        <section className="store-featured bg-slate-50">
+          <PageContainer className="py-14 sm:py-20">
+            <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.2em] text-rose-700 uppercase">
+                  {translate(language, "featuredCollection")}
+                </p>
+                <h2 className="store-display mt-3 text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl">
+                  {text("featured_heading", translate(language, "featuredGifts"))}
+                </h2>
+              </div>
+              <Link
+                className="store-link inline-flex items-center gap-2 text-sm font-semibold hover:underline"
+                href="/shop"
+              >
+                {translate(language, "viewAllProducts")}
+                <ArrowUpRight aria-hidden="true" size={16} />
+              </Link>
+            </div>
             {featuredProducts.length ? (
               <ProductGrid products={featuredProducts} />
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
-                {language === "bn"
-                  ? "নির্বাচিত উপহার শীঘ্রই এখানে দেখা যাবে।"
-                  : "Featured gifts will appear here soon."}
+                {translate(language, "noProducts")}
               </div>
             )}
-          </div>
-        </PageContainer>
-      </section>
+          </PageContainer>
+        </section>
+      ) : null}
 
-      <section className="bg-white">
-        <PageContainer className="py-16 sm:py-24">
-          <div>
-            <p className="text-sm font-semibold tracking-[0.2em] text-rose-700 uppercase">
-              {text("categories_heading", translate(language, "browseByOccasion"))}
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              {text("categories_heading", translate(language, "thoughtfulChoice"))}
-            </h2>
-          </div>
-          {categories.length ? (
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <a
-                  className="rounded-2xl border border-slate-200 p-6 transition hover:-translate-y-1 hover:border-rose-200 hover:shadow-sm"
-                  href={`/category/${category.slug}`}
-                  key={category.id}
-                >
-                  <h3 className="font-semibold text-slate-950">
-                    {localizedValue(category, "name", language)}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
-                    {localizedValue(category, "description", language) ||
-                      (language === "bn"
-                        ? "Shudha Studio-এর এই সংগ্রহটি দেখুন।"
-                        : "Explore this collection from Shudha Studio.")}
-                  </p>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-600">
-              {translate(language, "categoriesComingSoon")}
-            </div>
-          )}
-        </PageContainer>
-      </section>
+      {content.show_campaign_section ? (
+        <CampaignSection
+          categorySlug={campaignCategory?.slug}
+          description={localizedHomeText("campaign_description", campaignDescription)}
+          language={language}
+          theme={settings.active_theme}
+          title={localizedHomeText("campaign_title", campaignTitle)}
+        />
+      ) : null}
 
-      <section className="bg-white" id="contact">
-        <PageContainer className="py-16 sm:py-24">
-          <div className="grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-start">
+      {content.show_trust_section ? (
+        <TrustSection
+          copy={localizedHomeText("trust_copy", "")}
+          heading={localizedHomeText("trust_heading", "")}
+          language={language}
+          theme={settings.active_theme}
+        />
+      ) : null}
+
+      {content.show_meeting_section ? (
+        <MeetingCta
+          copy={localizedHomeText("meeting_copy", "")}
+          heading={localizedHomeText("meeting_heading", "")}
+          language={language}
+          theme={settings.active_theme}
+        />
+      ) : null}
+
+      {content.show_story_section ? (
+        <StorySection
+          copy={localizedHomeText("story_copy", "")}
+          language={language}
+          title={localizedHomeText("story_title", "")}
+        />
+      ) : null}
+
+      {content.show_contact_section ? (
+        <section className="store-contact bg-white" id="contact">
+          <PageContainer className="grid gap-10 py-14 sm:py-20 lg:grid-cols-[1fr_0.8fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold tracking-[0.2em] text-rose-700 uppercase">
-                {text("contact_heading", translate(language, "letsConnect"))}
+              <p className="text-xs font-semibold tracking-[0.2em] text-rose-700 uppercase">
+                {translate(language, "letsConnect")}
               </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+              <h2 className="store-display mt-4 max-w-xl text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl">
                 {text("contact_heading", translate(language, "planningSpecial"))}
               </h2>
-              <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
+              <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
                 {translate(language, "reachOut", { business: businessName })}
               </p>
+              <Link
+                className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full bg-rose-700 px-6 text-sm font-semibold text-white hover:bg-rose-800"
+                href="/book-a-meeting"
+              >
+                {translate(language, "bookMeeting")}
+                <ArrowUpRight aria-hidden="true" size={16} />
+              </Link>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+            <div className="store-contact-card rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
               <h3 className="text-lg font-semibold text-slate-950">
                 {translate(language, "contactDetails")}
               </h3>
@@ -238,9 +456,9 @@ export default async function Home() {
                 />
               </div>
             </div>
-          </div>
-        </PageContainer>
-      </section>
+          </PageContainer>
+        </section>
+      ) : null}
     </main>
   );
 }

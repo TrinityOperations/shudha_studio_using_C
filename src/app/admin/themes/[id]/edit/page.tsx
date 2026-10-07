@@ -3,6 +3,7 @@ import { PageContainer } from "@/components/public/page-container";
 import { ThemeForm } from "@/components/admin/theme-form";
 import { requireAdmin } from "@/lib/auth/server";
 import { getAdminTheme } from "@/lib/admin-themes";
+import { getAdminCategories } from "@/lib/admin-catalog";
 export const metadata: Metadata = { title: "Edit theme | Admin | Shudha Studio" };
 export const dynamic = "force-dynamic";
 export default async function EditThemePage({
@@ -11,7 +12,10 @@ export default async function EditThemePage({
   params: Promise<{ id: string }>;
 }) {
   await requireAdmin();
-  const theme = await getAdminTheme((await params).id);
+  const [theme, categories] = await Promise.all([
+    getAdminTheme((await params).id),
+    getAdminCategories(),
+  ]);
   return (
     <main className="min-h-screen bg-slate-100 py-10">
       <PageContainer>
@@ -21,7 +25,7 @@ export default async function EditThemePage({
           </a>
           <h1 className="mt-4 text-3xl font-semibold">Edit theme</h1>
           <div className="mt-8">
-            <ThemeForm id={theme.id} initial={theme} />
+            <ThemeForm categories={categories} id={theme.id} initial={theme} />
           </div>
         </div>
       </PageContainer>

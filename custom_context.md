@@ -4,6 +4,186 @@ This document is the safe extension guide for future coding agents. It describes
 the final application state as implemented in the repository. Verify code and
 migrations before making assumptions when a later change modifies behavior.
 
+## Handoff status (October 7, 2026)
+
+The storefront restructure and marketplace-discovery work described in the later
+sections is implemented in the current repository. The public route family now
+includes `/shop`, `/search`, `/shop/category/[slug]`, `/shop/occasion/[slug]`,
+`/shop/recipient/[slug]`, and configured `/shop/price/[range]`. `/products` and
+`/category/[slug]` are compatibility redirects; `/product/[slug]`, `/contact`,
+and `/book-a-meeting` remain active.
+
+Occasion, recipient, collection, and price-range discovery are configuration over
+existing categories and optional product pricing, not separate database entities.
+Do not describe them as independent admin-managed taxonomies or invent filters not
+implemented by the current query layer. Preserve bilingual content, public theme
+settings, admin authorization/RLS, image storage safety, and the meeting-request
+workflow when extending the storefront. `storefront_restructure_plan.md` is the
+historical design record; this document describes the current implementation.
+
+## Phase 2 shared storefront shell (October 7, 2026)
+
+- The `(public)` layout now passes theme-managed English/Bangla announcement text
+  to `AnnouncementBar` and queries active categories once for shared navigation.
+  Catalog query failure hides category groups and shows a localized unavailable
+  notice without preventing the shell from rendering. The group builder in
+  `src/lib/storefront-navigation.ts` resolves theme-curated category IDs against
+  active categories, so inactive/missing IDs never become links.
+- `Header` uses compatibility catalog redirects plus `/shop`, `/#contact`, `/contact`,
+  and `/book-a-meeting` URLs; the mobile drawer has focus trapping/restoration,
+  Escape and backdrop dismissal, scroll locking, nested groups and search. The
+  discovery routes listed above are implemented in the current storefront. Theme editor fields for
+  occasion/recipient/collection groups select existing categories only, and are
+  not separate taxonomies. A theme's announcement is optional and dismissal is
+  remembered per session and per message/theme.
+- `/products?sort=newest` orders eligible products by `created_at` descending;
+  other product listing order and public visibility constraints remain unchanged.
+  Catalog controls and pagination preserve the new sort parameter.
+- Footer draws active category links and contact details from existing data and
+  supports bilingual business names/addresses. Social and policy links remain
+  absent because there are no configured accounts or policy routes.
+- Reusable states live in `src/components/public/storefront-states.tsx`:
+  `StorefrontLoading`, `StorefrontEmpty`, `StorefrontError`,
+  `StorefrontNotFound`, and `OfflineNotice`. The offline notice reports connection
+  state only; it does not queue requests or offer offline catalog access.
+  `src/app/global-error.tsx` provides a generic bilingual retry state if the
+  public layout itself (or root application) fails before its language context
+  and theme can load.
+- Public shell CSS in `src/app/globals.css` is scoped under `.public-theme`.
+  Reuse the existing `--theme-*` color variables; shell primitives add
+  `--store-radius`, `--store-shadow`, `--store-space`, `.store-primary`,
+  `.store-focus`, `.store-search`, and `.store-state`. Tailwind responsive
+  breakpoints used by the shell: `sm` 640px, `lg` 1024px (desktop menu), and
+  `xl` 1280px; the drawer covers smaller viewports including tablets.
+
+## Phase 3 editorial homepage and optional pricing (October 7, 2026)
+
+- The public homepage retains the Phase 2 announcement/header shell and now
+  presents category discovery, occasion and recipient guides, featured products,
+  a theme-specific seasonal campaign, trust values, a meeting CTA, optional
+  editorial story copy, and the existing contact area. The guides map labels to
+  active existing category IDs; no guessed product classifications or new routes
+  are introduced. Unmapped guides link to `/products` with explanatory copy.
+- Theme editor campaign, trust, meeting, and story copy has English/Bangla fields.
+  Campaign destination is an optional existing category. Legacy occasion and
+  recipient category-ID arrays migrate to the new guide mapping in order; no
+  category is automatically assigned a semantic meaning. Legacy theme JSON is
+  normalized with empty defaults before public/admin use.
+- Product pricing is optional and requires applying
+  `supabase/migrations/20261007000100_product_pricing.sql` **before deploying
+  application code that selects the new columns**. The migration adds nullable
+  `price` and `compare_at_price`, plus `currency_code` (default `USD`). No product
+  price is invented. Admin validation enforces nonnegative values and requires a
+  compare-at price to exceed a configured current price. Cards and product detail
+  show localized prices or an inquiry prompt when price is null.
+- Public category/product images are optimized through Next Image only for the
+  configured Supabase public-storage host; external URLs bypass the optimizer.
+  Category discovery and product cards fall back to decorative/no-image states.
+  Theme imagery is layered in the hero; meeting links retain the existing
+  `/book-a-meeting` workflow. No newsletter, cart, checkout, delivery guarantee,
+  or payment claim has been added.
+- Current price/currency defaults are USD solely as a storage/UI default; confirm
+  the operating currency and update product records before publicly configuring
+  any prices. The database values remain nullable until an administrator enters
+  them.
+
+## Phase 4 marketplace discovery (October 7, 2026)
+
+- Discovery routes: `/shop`, `/search`, `/shop/category/[slug]`,
+  `/shop/occasion/[slug]`, `/shop/recipient/[slug]`, and configured
+  `/shop/price/[range]`. `/products` and `/category/[slug]` redirect to the new
+  equivalents while preserving single-valued query parameters. Product detail
+  remains `/product/[slug]`.
+- URL filters: `q`, `category`, `featured=1`, `range`, `currency`, `min_price`,
+  `max_price`, `sort` (`newest`, `name-asc`, `name-desc`, `price-asc`,
+  `price-desc`), and `page`. Pagination retains active constraints. Price sorting
+  is offered only when currency is explicit. Price ranges are optional bilingual
+  theme settings with ISO 4217 currency and nullable inclusive bounds; none are
+  preconfigured by code. A selected range fixes its currency and bounds. Price
+  filters exclude null-priced products. No currency conversion is performed.
+- Occasion and recipient routes are backed by theme-configured mappings to an
+  active category; they do not constitute product-level taxonomies. The occasion
+  landing may use optional bilingual theme editorial intro. Missing mappings or
+  inactive category targets return not-found. Category, occasion, and recipient
+  membership is exactly that configured category membership, not inferred
+- Search covers English/Bangla product title and description, category name
+  through the joined relation, and configured occasion/recipient labels by
+  resolving their existing category mappings into the backend query.
+- Backend query filters are category, featured, currency/price, title/description
+  search, and sort. Availability remains restricted to publicly available active
+  products in active categories by query and RLS. No favorites, tags, maker,
+  personalization, material, or style facet exists. Listing pages use server-side
+  count and 12-item pagination; no client-only partial-page filtering is used.
+- Cards retain a 4:3 image, show a gallery hover/focus image only when an
+  alternate image exists, honor reduced-motion preferences, and show configured
+  category, featured badge, actual price/currency, and compare-at price only when
+  greater. No favorite action is shown. Cards link by keyboard-accessible product
+  anchors. Missing images and prices retain their established fallbacks.
+- Shared discovery listing provides breadcrumbs, count, responsive controls/grid,
+  and an empty result with filter/search guidance. Search is URL-submitted (not
+  debounced) and has a clear action; empty query shows the catalog rather than
+  issuing per-keystroke requests. Existing public loading and retryable error
+  boundaries apply to routes. Search pages currently query product titles and
+- Search combines title/description/category-name OR conditions with configured
+  guide-category membership in one backend query, so count and pagination apply to
+  the same result set. Guide membership is considered only when the query matches
+  a configured bilingual guide label.
+
+## Phase 5 product detail (October 7, 2026)
+
+- Product detail at `/product/[slug]` presents breadcrumbs, a responsive editorial
+  gallery, localized title/description/price, availability state, existing contact
+  methods, and meeting-request CTA. `/book-a-meeting`, phone, WhatsApp, and email
+  actions are preserved; no cart, quantity, checkout, or payment system exists.
+- `ProductGallery` supports main and thumbnail selection, native-dialog larger
+  preview with Escape/close handling and focus return, deduplicated image paths, and
+  an accessible no-image/failed-image fallback. Image containers reserve a square
+  aspect ratio to prevent layout shift. Product descriptions use a native disclosure
+  element and all new controls have English/Bangla labels.
+- Same-category products are queried under the same active/available public catalog
+  constraints, with featured products used only to fill remaining related slots.
+  The current product and duplicate recommendations are excluded. Ratings, reviews,
+  specifications, personalization fields, inventory counts, and product-specific
+  delivery/pickup claims are not modeled and are not fabricated. Generic delivery
+  copy only invites customers to discuss arrangements with the team.
+- Product JSON-LD contains supported product name, description, images, category,
+  identifier, and an Offer only when an actual price exists. Availability reflects
+  the current public available-product query. No aggregate rating/review data is
+  emitted. Missing/invalid and unavailable products remain not-found under the
+  existing catalog query and Supabase RLS rules.
+- Recently viewed history is intentionally omitted; the application has no consent,
+  retention, or privacy behavior for browsing-history persistence.
+
+## Phase 6 contact and booking (October 7, 2026)
+
+- `/contact` presents configured phone, WhatsApp, email, bilingual contact copy, and
+  configured address only. Header/footer contact links now point there; the homepage
+  `#contact` section remains intact for existing deep links. Business hours and
+  service area are not represented in the settings schema, so the contact page asks
+  visitors to inquire rather than inventing either.
+- Booking retains `/api/meeting-requests`, the existing `meeting_requests` schema,
+  server-side date/time and input validation, timezone conversion, honeypot, unique
+  duplicate key, privileged server-only insert, and pending status. No email sender
+  or notification service currently exists. Meeting type is stored as a bilingual
+  label in the existing message, not a new database field.
+- Product booking links pass only the product slug. The booking page and API resolve
+  it independently with `getPublicProductBySlug`, so product names shown/stored are
+  sourced from public active/available catalog data. Invalid or unavailable product
+  references are rejected by the API; admin-only product data is never selected.
+  Product type and requirements are included in the existing message, subject to the
+  existing 5,000-character limit.
+- The form has localized choice labels, bilingual future-date/client feedback,
+  server feedback, keyboard focus to the validation summary, autocomplete/input
+  hints, a pending-disabled submit button, and an in-memory confirmation summary.
+  Confirmation explicitly remains a request until the business responds. No
+  meeting availability/schedule is promised. The hidden honeypot is preserved.
+- `TURNSTILE_SECRET_KEY` remains fail-closed when configured without token support;
+  no secret is exposed to the client, and authorization/RLS are unchanged.
+- Browser/mobile visual checks and the authorized database test request were not
+  run because this workspace's credentials target an unidentified
+  hosted Supabase project; localhost `NEXT_PUBLIC_SITE_URL` is insufficient proof
+  that database writes are non-production. No test row was inserted or deleted.
+
 ## Product purpose
 
 Shudha Studio is a bilingual gift-shop catalog and meeting-request application.
@@ -144,13 +324,18 @@ operations narrowly scoped.
 
 ## Data model and RLS
 
+The six migrations are applied in filename order: initial schema/RLS; image
+storage; corrected public-read policies; gallery-validator grant; custom themes;
+and optional product pricing.
+
 The initial migration creates:
 
 - `profiles`: Auth-linked profile with `role` defaulting to `user`.
 - `categories`: unique slug, bilingual names/descriptions/SEO, active flag,
   sort order, and image fields.
 - `products`: required category, unique slug, bilingual fields, active/available/
-  featured flags, sort order, image path, and `gallery_images` JSONB.
+  featured flags, sort order, image path, `gallery_images` JSONB, and optional
+  `price`, `compare_at_price`, and `currency_code` fields from the pricing migration.
 - `meeting_requests`: contact details, preferred timestamp, language, status,
   admin notes, assignment, unique `submission_key`, and timestamps.
 - `site_settings`: boolean singleton with business information, timezone,
@@ -254,6 +439,14 @@ local storage and the `shudha-language` cookie; server pages read the cookie wit
 `src/lib/i18n/translations.ts`, and bilingual database fields are selected with
 `localizedValue`.
 
+Phase 8 keeps that persistence mechanism and aligns the public layout, server
+routes, document language, and client provider to the effective language: a valid
+`shudha-language` cookie takes precedence over the configured site default. Client
+local storage restores the same preference after hydration. Catalog, search,
+category, product, contact, and booking UI copy uses translation keys; product and
+category records continue to use `localizedValue` with the English fallback only
+when the requested bilingual field is empty.
+
 Themes are defined in `src/lib/theme.ts` and constrained by the database and Zod
 schema to:
 
@@ -264,6 +457,15 @@ everyday, wedding, festival
 The public layout writes the selected theme to `data-theme`. CSS variables and
 theme selectors live in `src/app/globals.css`. Theme changes are administrator-
 only and revalidate the public layout.
+
+Phase 8 adds token-driven contrast protection for the primary button color,
+comfortable Bengali line height and wrapping, consistent card-height behavior,
+shared focus styles, reduced-motion handling, and safer image fallback behavior.
+The three seeded palettes pass the implemented normal-text white-on-primary
+contrast checks. No schema migration or live data write was used. Browser matrix
+verification is still not available in this repository; automated Phase 8 tests
+cover language resolution, translation usage, palette contrast values, theme
+activation wiring, and responsive/polish conventions.
 
 ## Accessibility and UX conventions
 
@@ -304,6 +506,41 @@ npm run build
 
 For database/auth/storage/responsive changes, also perform the live checks in
 `docs/deployment.md` using a non-production test account and controlled data.
+
+## Phase 9 quality pass
+
+Phase 9 added a focused quality regression suite at
+`tests/phase9-quality.test.mjs`. It verifies accessible booking-field validation
+state (`aria-invalid` and `aria-describedby`), mobile keyboard hints, localized
+catalog navigation/sorting labels, environment-backed metadata configuration,
+server-aligned public language initialization, and the existing reduced-motion,
+keyboard-menu, image-dialog, and wrapping safeguards.
+
+The final static test suite passed **27/27 tests**, including **4/4 Phase 9
+tests**. The production build compiled successfully, completed TypeScript
+checking during the build, and generated all application routes. Targeted
+Prettier formatting for Phase 9 files passed, and `git diff --check` reported no
+whitespace errors; Git's LF/CRLF normalization warnings are not source errors.
+
+The Phase 9 implementation also associates booking validation messages with
+their controls, localizes the catalog breadcrumb and sort label, initializes the
+public language provider with the server-resolved language, enables optimized
+category images for configured Supabase storage URLs, and uses
+`NEXT_PUBLIC_SITE_URL` as the root metadata base when configured.
+
+Responsive review covered the source-level safeguards for 320px, 375px, 414px,
+tablet, 1024px, desktop, and large-desktop layouts: flexible grids, wrapping
+bilingual content, minimum touch targets, mobile menu focus trapping/Escape
+close behavior, reserved image aspect ratios, and reduced-motion CSS. A full
+browser viewport matrix was not executed because the repository has no browser
+automation dependency or test suite. Microsoft Edge is installed locally, but a
+repeatable automated Edge harness is not part of the project.
+
+There is no live Supabase integration test suite; no production account,
+meeting request, storage object, or database record was changed during Phase 9.
+Sitemap and robots routes remain absent, as documented above. The repository-wide
+format check continues to flag the existing `src/app/globals.css` line-1
+formatting issue; it was not introduced by Phase 9.
 
 ## Safe extension checklist
 
